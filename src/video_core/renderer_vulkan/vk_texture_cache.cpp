@@ -359,14 +359,16 @@ constexpr std::array<VkFormat, 2> OpaqueAstcViewFormats{VK_FORMAT_BC1_RGBA_UNORM
 // The largest mip a GPU-transcoded ASTC texture keeps on Android (EDEN_NX2_ASTC_MAX_DIM=<px>, 0
 // keeps all): transcoded to BC1/BC3 each is 2-4x its ASTC size, and on Ocarina of Time's first
 // scene ~1 GB of them on top of the rest had a 12 GB phone's app killed for memory. A phone
-// renders at well under 1080p, so their top levels are rarely sampled anyway.
+// renders at well under 1080p, so their top levels are rarely sampled anyway. Below native
+// resolution the cap halves to 512: at 0.5x a 12 GB phone was still killed when the scene's
+// graphics memory climbed from 0.8 to 3 GB.
 [[nodiscard]] u32 TranscodedAstcMaxDimension() {
     static const u32 value = [] {
         if (const char* text = std::getenv("EDEN_NX2_ASTC_MAX_DIM")) {
             return static_cast<u32>(std::strtoul(text, nullptr, 10));
         }
 #ifdef __ANDROID__
-        return 1024U;
+        return Settings::values.resolution_info.downscale ? 512U : 1024U;
 #else
         return 0U;
 #endif
